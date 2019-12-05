@@ -1,4 +1,5 @@
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,30 @@
 
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
+
 <body>
     <h1>Checkers</h1>
+    <div id="boardContainer">
+        <div id="board"></div>
+        <div class="seprator"></div>
+        <div>
+            <h1>Scoreboard</h1>
+            <h3 class="red">Red :<span id="redScore">12</span></h3>
+            <h3 class="red">Black :<span id="blackScore">12</span></h3>
+            <h2>Turn : <span id="player">BLACK</span></h2>
+        </div>
+    </div>
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <script src="two.js"></script>
+    <script src="Game.js"></script>
 
-    <script src="objects.js"></script>
+    <script src="BoardState.js"></script>
+    <script>
+        var g;
+        window.onload = () => {
+            g = new Game();
+        }
+    </script>
 </body>
+
 </html>

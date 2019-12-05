@@ -1,4 +1,15 @@
-:root
-{
-    background-color: cornsilk;
+:root {
+    background-color: white;
+}
+
+#boardContainer {
+    display: flex;
+}
+
+.seprator {
+    background: grey;
+    height: inherit;
+    width: 2px;
+    margin-right: 20px;
+    ;
 }
