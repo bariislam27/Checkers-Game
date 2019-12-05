@@ -11,7 +11,16 @@
 
 <body>
     <h1>Checkers</h1>
-    <div id="board"></div>
+    <div id="boardContainer">
+        <div id="board"></div>
+        <div class="seprator"></div>
+        <div>
+            <h1>Scoreboard</h1>
+            <h3 class="red">Red :<span id="redScore">12</span></h3>
+            <h3 class="red">Black :<span id="blackScore">12</span></h3>
+            <h2>Turn : <span id="player">BLACK</span></h2>
+        </div>
+    </div>
     <script src="https://d3js.org/d3.v5.js"></script>
     <script src="two.js"></script>
     <script src="Game.js"></script>

@@ -1,5 +1,7 @@
 const board = document.getElementById("board")
-
+const redScore = document.getElementById("redScore")
+const blackScore = document.getElementById("blackScore")
+const playerTurn = document.getElementById("player")
 class Game {
     constructor(playerNum, score) {
         // state board
@@ -16,7 +18,6 @@ class Game {
         }).appendTo(board);
         this.setUpSvgElements();
         this.addOnClickToElements()
-        console.log(this.checkersBoard)
     }
 
     twoDArray(x) {
@@ -38,10 +39,13 @@ class Game {
         for (let i = 0; i < state.length; i++) {
             let checkersBoardRow = []
             for (let j = 0; j < state[i].length; j++) {
+                // the board rectangles
                 let rec = t.makeRectangle(i * size + size / 1.5, j * size + size / 1.5, size, size);
                 if ((i % 2 != 0 && j % 2 == 0) || (i % 2 == 0 && j % 2 != 0))
-                    rec.fill = "#444"
+                    rec.fill = "rgba(0,0,0,0)"
                 checkersBoardRow.push(rec);
+
+                // player circles
                 // red =1
                 if (state[j][i] == 1) {
                     let c = t.makeCircle(i * size + size / 1.5, j * size + size / 1.5, size / 2.1);
@@ -66,9 +70,12 @@ class Game {
         let guiState = this.guiState;
         for (let i = 0; i < guiState.length; i++) {
             for (let j = 0; j < guiState[i].length; j++) {
+
+                // onclick event for player circle
                 if (guiState[i][j] != 0) {
                     guiState[i][j]._renderer.elem.setAttribute("pos", `${i}_${j}`);
                     guiState[i][j]._renderer.elem.onclick = (e) => {
+
                         if (this.selected[0] != null)
                             this.guiState[this.selected[0]][this.selected[1]].noStroke();
                         let x = e.target.getAttribute("pos")[0],
@@ -80,15 +87,26 @@ class Game {
                     }
                 }
 
+                // onclick event for the board rectangles
                 this.checkersBoard[i][j]._renderer.elem.setAttribute("pos", `${i}_${j}`);
                 this.checkersBoard[i][j]._renderer.elem.onclick = (e) => {
                     let x = e.target.getAttribute("pos")[0],
-                        y = e.target.getAttribute("pos")[2]
-
-                    console.log(x, y)
-                    if (this.selected[0] != null)
-                        this.guiState[this.selected[0]][this.selected[1]].remove();
-                    this.two.update();
+                        y = e.target.getAttribute("pos")[2],
+                        size = 90
+                    if (this.selected[0] != null && this.boardState.isMoveLegal({ x: this.selected[0], y: this.selected[1] }, { x: y, y: x }, this)) {
+                        let t = this.two;
+                        let boardState = this.boardState.getBoard();
+                        this.guiState[this.selected[0]][this.selected[1]].translation.set(x * size + size / 1.5, y * size + size / 1.5)
+                        this.guiState[this.selected[0]][this.selected[1]].noStroke()
+                        this.guiState[y][x] = Object.assign(t.makeCircle(), this.guiState[this.selected[0]][this.selected[1]])
+                        boardState[y][x] = boardState[this.selected[0]][this.selected[1]]
+                        boardState[this.selected[0]][this.selected[1]] = 0
+                        this.guiState[y][x]._renderer.elem.setAttribute("pos", `${y}_${x}`)
+                        this.guiState[this.selected[0]][this.selected[1]] = 0
+                        this.selected = [null, null]
+                        this.updateScore()
+                    }
+                    this.two.update()
                 }
             }
         }
@@ -96,8 +114,36 @@ class Game {
         this.two.update();
     }
 
-    getTwoVariable() {
-        return this.two;
+    setKing(coord, player) {
+        if (player == 1)
+            this.guiState[coord[0]][coord[1]].fill = "rgb(150,0,0)"
+        else if (player == -1)
+            this.guiState[coord[0]][coord[1]].fill = "rgb(150,150,150)"
+    }
+
+    removeMiddlePiece(coord) {
+        this.guiState[coord[0]][coord[1]].remove();
+        this.boardState.getBoard()[coord[0]][coord[1]] = 0
+    }
+    updateScore() {
+        let board = this.boardState.getBoard(),
+            red = 0,
+            black = 0;
+        for (let i = 0; i < board.length; i++)
+            for (let j = 0; j < board[i].length; j++) {
+                if (parseInt(board[i][j]) == 1)
+                    red++
+                    else if (parseInt(board[i][j]) == -1) black++
+            }
+        redScore.innerHTML = red
+        blackScore.innerHTML = black
+        if (parseInt(this.boardState.getTurn()) == 1)
+            playerTurn.innerHTML = "RED"
+        else playerTurn.innerHTML = "BLACK"
+        if (red == 0)
+            playerTurn.innerHTML = "Black wins"
+        else if (black == 0)
+            playerTurn.innerHTML = "Red wins"
     }
 
 }
