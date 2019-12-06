@@ -2,6 +2,7 @@ const board = document.getElementById("board")
 const redScore = document.getElementById("redScore")
 const blackScore = document.getElementById("blackScore")
 const playerTurn = document.getElementById("player")
+const size = parseInt((window.innerHeight * 0.8) / 8)
 class Game {
     constructor(playerNum, score) {
         // state board
@@ -13,8 +14,8 @@ class Game {
         // contains all the rectangles
         this.checkersBoard = [];
         this.two = new Two({
-            width: window.innerHeight * 0.8,
-            height: window.innerHeight * 0.8,
+            width: window.innerHeight * 0.9,
+            height: window.innerHeight * 0.9,
         }).appendTo(board);
         this.setUpSvgElements();
         this.addOnClickToElements()
@@ -35,7 +36,6 @@ class Game {
         let state = this.boardState.getBoard()
         let guiState = this.guiState
         let t = this.two;
-        let size = 90;
         for (let i = 0; i < state.length; i++) {
             let checkersBoardRow = []
             for (let j = 0; j < state[i].length; j++) {
@@ -91,8 +91,7 @@ class Game {
                 this.checkersBoard[i][j]._renderer.elem.setAttribute("pos", `${i}_${j}`);
                 this.checkersBoard[i][j]._renderer.elem.onclick = (e) => {
                     let x = e.target.getAttribute("pos")[0],
-                        y = e.target.getAttribute("pos")[2],
-                        size = 90
+                        y = e.target.getAttribute("pos")[2]
                     if (this.selected[0] != null && this.boardState.isMoveLegal({ x: this.selected[0], y: this.selected[1] }, { x: y, y: x }, this)) {
                         let t = this.two;
                         let boardState = this.boardState.getBoard();
