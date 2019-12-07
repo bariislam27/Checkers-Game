@@ -3,6 +3,12 @@ const redScore = document.getElementById("redScore")
 const blackScore = document.getElementById("blackScore")
 const playerTurn = document.getElementById("player")
 const size = parseInt((window.innerHeight * 0.8) / 8)
+const playingWith = {
+    "Opponent (Red)": "human"
+}
+const dgui = new dat.GUI();
+
+
 class Game {
     constructor(playerNum, score) {
         // state board
@@ -17,8 +23,15 @@ class Game {
             width: window.innerHeight * 0.9,
             height: window.innerHeight * 0.9,
         }).appendTo(board);
+
         this.setUpSvgElements();
         this.addOnClickToElements()
+        this.setUpController()
+    }
+
+    setUpController() {
+        let opp = dgui.add(playingWith, "Opponent (Red)", ['Human', 'AI']);
+        opp.setValue("Human")
     }
 
     twoDArray(x) {
@@ -42,7 +55,11 @@ class Game {
                 // the board rectangles
                 let rec = t.makeRectangle(i * size + size / 1.5, j * size + size / 1.5, size, size);
                 if ((i % 2 != 0 && j % 2 == 0) || (i % 2 == 0 && j % 2 != 0))
-                    rec.fill = "rgba(0,0,0,0)"
+                    rec.fill = "rgba(100,100,100,1)"
+                else if(!(i % 2 != 0 && j % 2 == 0) || (i % 2 == 0 && j % 2 != 0)){
+                    rec.fill = "rgba(100,100,0,1)"
+                }
+                    
                 checkersBoardRow.push(rec);
 
                 // player circles
