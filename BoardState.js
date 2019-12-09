@@ -7,33 +7,136 @@ let
 
 
 class BoardState {
-    constructor() {
-        this.board = [
-            [red, 0, red, 0, red, 0, red, 0],
-            [0, red, 0, red, 0, red, 0, red],
-            [red, 0, red, 0, red, 0, red, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, black, 0, black, 0, black, 0, black],
-            [black, 0, black, 0, black, 0, black, 0],
-            [0, black, 0, black, 0, black, 0, black]
-        ]
-        this.turn = black;
+    constructor(board) {
+        if (board == null)
+            this.board = [
+                [red, 0, red, 0, red, 0, red, 0],
+                [0, red, 0, red, 0, red, 0, red],
+                [red, 0, red, 0, red, 0, red, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, black, 0, black, 0, black, 0, black],
+                [black, 0, black, 0, black, 0, black, 0],
+                [0, black, 0, black, 0, black, 0, black]
+            ]
+        else this.board = board
+        // this.turn = black;
     }
-    getBoard() { return this.board; }
-
-    nextTurn() {
-        if (this.turn == red || this.turn == redKing)
-            this.turn = black
-        else
-            this.turn = red;
+    getBoard() {
+        return this.board;
     }
 
-    sign(x) { return x > 0 ? 1 : x < 0 ? -1 : 0; }
+    // makes a deep copy of a given array
+    static copy(board) {
+        return new BoardState(JSON.parse(JSON.stringify(board)))
+    }
 
-    getJumpedPiece(from, to) {
-        var distance = { x: to.x - from.x, y: to.y - from.y };
-        console.log(distance)
+    static doAction(action,board){
+        // var distance = {
+        //     x: to.x - from.x,
+        //     y: to.y - from.y
+        // };
+        if(Math.abs(action[1].x-action[0].x)==2){
+            let jumpedPiece=BoardState.getJumpedPiece(action[0],action[1])
+            board[jumpedPiece[0]][jumpedPiece[1]]=0
+        }
+        let valueAt=board[action[0].x][action[0].y]
+        board[action[0].x][action[0].y]=0
+        board[action[1].x][action[1].y]=valueAt
+    }
+
+    static winner(board) {
+        let redN = 0,
+            blackN = 0;
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                if (parseInt(board[i][j]) == red)
+                    redN++
+                else if (parseInt(board[i][j]) == black)
+                    blackN++
+            }
+        }
+        if (redN == 0)
+            return black
+        else if (blackN == 0)
+            return red
+        else if (blackN > 0 && redN > 0) {
+            return 0
+        }
+        return 0
+    }
+
+    static getLegalActions(player,board) {
+        let singleActions = [
+                [1, 1],
+                [-1, -1],
+                [-1, 1],
+                [1, -1]
+            ],
+            doubleActions = [
+                [2, 2],
+                [-2, -2],
+                [-2, 2],
+                [2, -2]
+            ],
+            legalPositions = []
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                let offset = 0;
+                player == 1 ? offset = .1 : offset = -.1;
+                if (board[i][j] === player || board[i][j] === (player + offset)) {
+                    for (let a = 0; a < singleActions.length; a++) {
+                        if (BoardState.isMoveLegal({
+                                x: i,
+                                y: j
+                            }, {
+                                x: i + singleActions[a][0],
+                                y: j + singleActions[a][1]
+                            }, null, board)) {
+                            legalPositions.push([{
+                                x: i,
+                                y: j
+                            }, {
+                                x: i + singleActions[a][0],
+                                y: j + singleActions[a][1]
+                            }])
+                        }
+                    }
+                    for (let a = 0; a < doubleActions.length; a++) {
+                        if (BoardState.isMoveLegal({
+                                x: i,
+                                y: j
+                            }, {
+                                x: i + doubleActions[a][0],
+                                y: j + doubleActions[a][1]
+                            }, null,board)) {
+                            legalPositions.push([{
+                                x: i,
+                                y: j
+                            }, {
+                                x: i + doubleActions[a][0],
+                                y: j + doubleActions[a][1]
+                            }])
+                        }
+                    }
+                }
+            }
+        }
+        return legalPositions
+    }
+
+    // nextTurn() {
+    //     if (this.turn == red || this.turn == redKing)
+    //         this.turn = black
+    //     else
+    //         this.turn = red;
+    // }
+
+    static getJumpedPiece(from, to) {
+        var distance = {
+            x: to.x - from.x,
+            y: to.y - from.y
+        };
         if (Math.abs(distance.x) == 2) {
             var jumpy = parseInt(from.y) + Math.sign(distance.y);
             var jumpx = parseInt(from.x) + Math.sign(distance.x);
@@ -42,79 +145,85 @@ class BoardState {
 
     }
 
-    removeMiddlePiece(x, y) {
-
-    }
-
-    isMoveLegal(from, to, game) {
-        let piece = this.board[to.x][to.y],
-            removeMiddlePiece = false,
-            jumpedPieceIndex;
+    static isMoveLegal(from, to, game,board) {
         if ((to.x < 0) || (to.y < 0) || (to.x > 7) || (to.y > 7)) {
             return false;
         }
-        var distance = { x: to.x - from.x, y: to.y - from.y };
-        console.log(distance)
+        let piece = board[to.x][to.y],
+            removeMiddlePiece = false,
+            jumpedPieceIndex;
+
+        var distance = {
+            x: to.x - from.x,
+            y: to.y - from.y
+        };
         if ((distance.x == 0) || (distance.y == 0)) {
-            console.log("ILLEGAL MOVE: horizontal or vertical move");
+            //console.log("ILLEGAL MOVE: horizontal or vertical move");
             return false;
         }
         if (Math.abs(distance.x) != Math.abs(distance.y)) {
-            console.log("ILLEGAL MOVE: non-diagonal move");
+            //console.log("ILLEGAL MOVE: non-diagonal move");
             return false;
         }
         if (Math.abs(distance.x) > 2) {
-            console.log("ILLEGAL MOVE: more than two diagonals");
+            //console.log("ILLEGAL MOVE: more than two diagonals");
             return false;
         }
-        if (this.board[to.x][to.y] != 0) {
-            console.log("ILLEGAL MOVE: cell is not empty");
+        if (board[to.x][to.y] != 0) {
+            //console.log("ILLEGAL MOVE: cell is not empty");
             return false;
         }
         if (Math.abs(distance.x) == 2) {
-            jumpedPieceIndex = this.getJumpedPiece(from, to);
-            var jumpedPiece = this.board[jumpedPieceIndex[0]][jumpedPieceIndex[1]]
+            jumpedPieceIndex = BoardState.getJumpedPiece(from, to);
+            // board[jumpedPieceIndex[0]][jumpedPieceIndex[1]]=0
+            var jumpedPiece = board[jumpedPieceIndex[0]][jumpedPieceIndex[1]]
 
             if (jumpedPiece == null) {
-                console.log("ILLEGAL MOVE: no piece to jump");
+                //console.log("ILLEGAL MOVE: no piece to jump");
                 return false;
             }
-            var pieceState = parseInt(this.board[from.x][from.y]);
+            var pieceState = parseInt(board[from.x][from.y]);
             var jumpedState = parseInt(jumpedPiece);
             if (pieceState != -jumpedState) {
-                console.log("ILLEGAL MOVE: can't jump own piece");
+                //console.log("ILLEGAL MOVE: can't jump own piece");
                 return false;
             }
             removeMiddlePiece = true;
         }
-        if ((parseInt(this.board[from.x][from.y]) === this.board[from.x][from.y]) && (Math.sign(this.board[from.x][from.y]) != Math.sign(distance.x))) {
-            console.log("ILLEGAL MOVE: wrong direction");
+        if ((parseInt(board[from.x][from.y]) === board[from.x][from.y]) && (Math.sign(board[from.x][from.y]) != Math.sign(distance.x))) {
+            //console.log("ILLEGAL MOVE: wrong direction");
             return false;
         }
-        console.log(`Turn ${this.turn}`)
-        if (this.turn != parseInt(this.board[from.x][from.y])) {
-            console.log("ILLEGAL TURN: wrong player")
-            return false;
-        }
+        // if (this.turn != parseInt(this.board[from.x][from.y])) {
+        //     console.log("ILLEGAL TURN: wrong player")
+        //     return false;
+        // }
 
-        if (to.x == 0 || to.x == 7) {
-            if (this.turn == red) {
-                this.board[from.x][from.y] = redKing
-                game.setKing([from.x, from.y], 1)
-            } else if (this.turn == black) {
-                this.board[from.x][from.y] = blackKing
-                game.setKing([from.x, from.y], -1)
-            }
-        }
+        // if (to.x == 0 || to.x == 7) {
+
+        //     if (board[from.x][from.y] == red) {
+        //         board[from.x][from.y] = redKing
+        //         if (game != null)
+        //             game.setKing([from.x, from.y], 1)
+        //     } else if (board[from.x][from.y] == black) {
+        //         board[from.x][from.y] = blackKing
+        //         if (game != null)
+        //             game.setKing([from.x, from.y], -1)
+        //     }
+        // }
 
 
-        if (removeMiddlePiece) {
+        if (removeMiddlePiece && game != null) {
+            // board[jumpedPieceIndex[0]][jumpedPieceIndex[1]]=0
             game.removeMiddlePiece(jumpedPieceIndex)
         }
-        this.nextTurn()
+        // if (game != null)
+        //     this.nextTurn()
         return true
     }
 
-    getTurn() { return this.turn }
+    // getTurn() {
+    //     return this.turn
+    // }
 
 }

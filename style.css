@@ -1,5 +1,5 @@
 :root {
-    background-color: white;
+    background-color: black;
 }
 
 #boardContainer {
@@ -7,9 +7,20 @@
 }
 
 .seprator {
-    background: grey;
+    background: whitesmoke;
     height: inherit;
     width: 2px;
     margin-right: 20px;
     ;
+}
+
+.headline {
+    font-size: 5vh;
+}
+
+.infoContainer {
+    color: white;
+    font-size: 2vh;
+    font-weight: 800;
+    font-family: "lato";
 }

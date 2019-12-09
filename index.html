@@ -4,27 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
     <title>Checkers</title>
 
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 
 <body>
-    <h1>Checkers</h1>
+
     <div id="boardContainer">
         <div id="board"></div>
         <div class="seprator"></div>
-        <div>
-            <h1>Scoreboard</h1>
-            <h3 class="red">Red :<span id="redScore">12</span></h3>
-            <h3 class="red">Black :<span id="blackScore">12</span></h3>
-            <h2>Turn : <span id="player">BLACK</span></h2>
+        <div class="infoContainer">
+            <h1 class="headline">Checkers</h1>
+            <h2>Scoreboard</h2>
+            <h3>Red :<span id="redScore">12</span></h3>
+            <h3>Black :<span id="blackScore">12</span></h3>
+            <span id="player"></span>
         </div>
     </div>
-    <script src="https://d3js.org/d3.v5.js"></script>
+    <!-- Library to handle the gui part.-->
     <script src="two.js"></script>
-    <script src="Game.js"></script>
+    <!-- Library to handle the controls of the game -->
+    <script src="dat.gui.min.js"></script>
 
+    <!-- Project related js files -->
+    <script src="Game.js"></script>
+    <script src="AI.js"></script>
     <script src="BoardState.js"></script>
     <script>
         var g;
