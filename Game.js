@@ -8,6 +8,7 @@ const playerTurn = document.getElementById("player")
 const size = parseInt((window.innerHeight * 0.8) / 8)
 
 
+
 const playingWith = {
         "Opponent (Red)": ""
     },
@@ -113,10 +114,12 @@ class Game {
                             this.guiState[this.selected[0]][this.selected[1]].noStroke();
                         let x = e.target.getAttribute("pos")[0],
                             y = e.target.getAttribute("pos")[2]
-                        this.guiState[x][y].stroke = "#0F0"
-                        this.selected = [x, y]
-                        this.guiState[x][y].linewidth = 5;
-                        this.two.update()
+                        if ((playingWith["Opponent (Red)"] == "Human") || (playingWith["Opponent (Red)"] != "AI" ^ this.boardState.getBoard()[x][y] != config.player)) {
+                            this.guiState[x][y].stroke = "#0F0"
+                            this.selected = [x, y]
+                            this.guiState[x][y].linewidth = 5;
+                            this.two.update()
+                        }
                     }
                 }
 
@@ -150,14 +153,16 @@ class Game {
                         this.selected = [null, null]
                         //Human move complete
 
+                        this.two.update()
+
                         // if playing with AI
                         if (playingWith["Opponent (Red)"] == "AI") {
                             if (this.AI == null)
                                 this.AI = new AI(config)
-                            this.makeComputerMove(this.AI.getAction(this.boardState))
+                            setTimeout(this.makeComputerMove, 10, this.AI.getAction(this.boardState), this.boardState.getBoard(), this.guiState, this.two, this)
                         }
-                        this.updateScore()
-
+                        if (playingWith["Opponent (Red)"] == "Human")
+                            this.updateScore()
                     }
                     this.two.update()
                 }
@@ -168,14 +173,15 @@ class Game {
     }
 
 
-    makeComputerMove(action) {
-        if(action===null)
-            return
+    makeComputerMove(action, board, guiState, two, thisRef) {
+        if (action === null){
+            thisRef.updateScore();
+            return 
+        }
         let pX = action[0].x,
             pY = action[0].y,
             nX = action[1].x,
-            nY = action[1].y,
-            boardState = this.boardState.getBoard();
+            nY = action[1].y
         // console.log(action)
         BoardState.isMoveLegal({
             x: pX,
@@ -183,22 +189,22 @@ class Game {
         }, {
             x: nX,
             y: nY
-        }, this, this.boardState.getBoard())
-        this.guiState[pX][pY].translation.set(parseInt(nY * size + size / 1.5), parseInt(nX * size + size / 1.5))
-        this.guiState[nX][nY] = Object.assign(this.two.makeCircle(), this.guiState[pX][pY])
-        boardState[nX][nY] = boardState[pX][pY]
-        boardState[pX][pY] = 0
-        this.guiState[nX][nY]._renderer.elem.setAttribute("pos", `${nX}_${nY}`)
-        this.guiState[pX][pY] = 0
+        }, thisRef, board)
+        guiState[pX][pY].translation.set(parseInt(nY * size + size / 1.5), parseInt(nX * size + size / 1.5))
+        guiState[nX][nY] = Object.assign(two.makeCircle(), guiState[pX][pY])
+        board[nX][nY] = board[pX][pY]
+        board[pX][pY] = 0
+        guiState[nX][nY]._renderer.elem.setAttribute("pos", `${nX}_${nY}`)
+        guiState[pX][pY] = 0
         if (nX == 0 || nX == 7) {
-            this.setKing([nX, nY], 1)
+            thisRef.setKing([nX, nY], 1)
         }
-        
-
+        two.update();
+        thisRef.updateScore();
     }
 
     setKing(coord, player) {
-        let board=this.boardState.getBoard()
+        let board = this.boardState.getBoard()
         if (board[coord[0]][coord[1]] == red) {
             board[coord[0]][coord[1]] = 1.1
         } else if (board[coord[0]][coord[1]] == black) {
@@ -217,7 +223,7 @@ class Game {
         document.getElementById(this.guiState[coord[0]][coord[1]].id).remove();
         this.guiState[coord[0]][coord[1]].remove();
         this.guiState[coord[0]][coord[1]] = 0;
-        // this.boardState.getBoard()[coord[0]][coord[1]] = 0
+        this.boardState.getBoard()[coord[0]][coord[1]] = 0
         this.two.update();
     }
     updateScore() {

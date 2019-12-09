@@ -100,7 +100,7 @@ class AI {
                 this.currentMaxDepth++;
             }
         } catch (err) {
-            //console.log(err)
+            // console.log(err)
         }
         //console.log("currentBestOverallAction", this.currentBestOverallActionVal)
         // return the best action found

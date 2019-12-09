@@ -214,7 +214,7 @@ class BoardState {
 
 
         if (removeMiddlePiece && game != null) {
-            board[jumpedPieceIndex[0]][jumpedPieceIndex[1]]=0
+            // board[jumpedPieceIndex[0]][jumpedPieceIndex[1]]=0
             game.removeMiddlePiece(jumpedPieceIndex)
         }
         // if (game != null)
