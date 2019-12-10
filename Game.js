@@ -297,7 +297,6 @@ class Game {
     }
 
     makeComputerMove(action, board, guiState, two, thisRef) {
-        console.log(action)
         if (action === null) {
             thisRef.updateScore(true);
             return
