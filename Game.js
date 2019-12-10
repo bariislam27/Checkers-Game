@@ -403,7 +403,7 @@ class Game {
         //     document.getElementById("ai").style.display = "inline"
         // }
         startButton.remove()
-        document.getElementsByClassName("dg ac")[0].remove();
+        this.dgui.close();
     }
 
     aiMove() {
@@ -435,7 +435,7 @@ class Game {
                     // this.two.update()
                 }, configRed["Time limit(ms)"])
         } else {
-            this.clearIntervals
+            this.clearIntervals()
         }
 
     }
