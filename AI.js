@@ -23,21 +23,22 @@ class AI {
         this.evals = []
     }
     getAction(state) {
+        // console.log(this.config,state)
         return this.IDAlphaBeta(state);
     }
     eval = function (state) {
         let winner = BoardState.winner(state);
         // console.log("winner ", winner)
-        if (winner === 1) {
+        if (winner === this.maxPlayer) {
             return INFINITY;
         } else if (winner === 0) {
-            return this.heuristic(state);
-        } else if (winner === -1) {
+            return this.heuristic(state)(this.maxPlayer);
+        } else if (winner === -this.maxPlayer) {
             return NINFINITY;
         }
     }
 
-    heuristic = (board) => {
+    heuristic = (board)=>(player) => {
         let humanPieces = 0,
             humanKings = 0,
             humanPositions = 0,
@@ -47,7 +48,7 @@ class AI {
             finalSum = 0;
         board.forEach((x, i) => {
             x.forEach((y, j) => {
-                if (y < 0) //human
+                if (parseInt(y)==-player) //human
                 {
                     humanPieces++
                     if (y == -1.1) {
@@ -56,7 +57,7 @@ class AI {
                     if (i == 0 || i == 7 || j == 0 || j == 7) {
                         humanPositions += 5
                     } else humanPositions += 3
-                } else if (y > 0) {
+                } else if (parseInt(y)==player) {
                     computerPieces++
                     if (y == 1.1) {
                         computerKings++
@@ -67,13 +68,13 @@ class AI {
                 }
             })
         })
-
+        // console.log("Human and computer",humanPieces,computerPieces)
         let kingsDifference, posDifference, pieceDifference;
         kingsDifference = computerKings - humanKings;
         pieceDifference = computerPieces - humanPieces;
         posDifference = computerPieces - humanPieces;
 
-        let weights = [2, 40, 200],
+        let weights = [2, 20, 200],
             vals = [posDifference, kingsDifference, pieceDifference],
             returnValue = 0;
         weights.forEach((w, i) => {
@@ -100,9 +101,9 @@ class AI {
                 this.currentMaxDepth++;
             }
         } catch (err) {
-            // console.log(err)
+            console.log(err)
         }
-        //console.log("currentBestOverallAction", this.currentBestOverallActionVal)
+        // console.log("currentBestOverallAction", this.currentBestOverallActionVal)
         // return the best action found
         // console.log(this.vals)
         if (this.bestAction !== null)
@@ -123,7 +124,7 @@ class AI {
         // get array of legal actions
         let legalActions = BoardState.getLegalActions(max, state.getBoard());
 
-        //console.log(legalActions)
+        // console.log(legalActions)   
         // if maxdepth or time is 0 then randomly select
         // a legal action
         // if ((depth === 0 && this.currentBestAction === null)) {
@@ -146,7 +147,7 @@ class AI {
 
         //console.log("depth ",depth)
         // evaluating state
-        let evalV = this.eval(state.getBoard(), this.maxPlayer);
+        let evalV = this.eval(state.getBoard());
         // console.log(this.evals)
         this.evals.push(evalV)
         if (depth >= this.currentMaxDepth || legalActions.length === 0 || evalV === INFINITY || evalV === NINFINITY) {
@@ -157,7 +158,7 @@ class AI {
         let v;
         let vAction;
         // max player
-        if (max > 0) {
+        if (max==this.maxPlayer) {
             v = NINFINITY;
             for (let i = 0; i < legalActions.length; i++) {
                 //console.log(legalActions[i])
@@ -169,12 +170,12 @@ class AI {
                 // });
 
                 let vprime = this.AlphaBeta(deepCopiedState, alpha, beta, depth + 1, -max);
-                // console.log("V ", v, "Vprime ", vprime)
+                // console.log("Max: ","V ", v, "Vprime ", vprime)
                 if (vprime > v) {
                     v = vprime;
                     vAction = legalActions[i];
-                    // console.log("V ", v, "Vprime ", vprime)
-                    if (depth === 0 && v > this.currentBestActionValue) {
+                    // console.log("Max: ","V ", v, "Vprime ", vprime)
+                    if (depth==0 &&v > this.currentBestActionValue) {
                         this.currentBestActionValue = v;
                         this.currentBestAction = vAction;
                         if (vprime == INFINITY)
@@ -186,7 +187,7 @@ class AI {
             }
         }
         // minimizing player
-        else if (max < 0) {
+        else if (max !=this.maxPlayer) {
             v = INFINITY;
             for (let i = 0; i < legalActions.length; i++) {
                 //console.log(legalActions[i])
@@ -199,6 +200,8 @@ class AI {
                 // });
 
                 let vprime = this.AlphaBeta(deepCopiedState, alpha, beta, depth + 1, -max);
+
+                // console.log("Min: ","V ", v, "Vprime ", vprime)
                 if (vprime < v) {
                     v = vprime;
                     vAction = legalActions[i];

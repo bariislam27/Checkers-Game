@@ -1,26 +1,54 @@
-:root {
-    background-color: black;
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+      45deg,
+      rgba(7, 7, 7, 0.2) 0px,
+      rgba(7, 7, 7, 0.2) 39px,
+      rgba(252, 252, 252, 0.2) 39px,
+      rgba(252, 252, 252, 0.2) 65px,
+      rgba(105, 105, 105, 0.2) 65px,
+      rgba(105, 105, 105, 0.2) 104px,
+      rgba(72, 72, 72, 0.2) 104px,
+      rgba(72, 72, 72, 0.2) 145px,
+      rgba(29, 29, 29, 0.2) 145px,
+      rgba(29, 29, 29, 0.2) 184px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      rgba(154, 154, 154, 0.2) 0px,
+      rgba(154, 154, 154, 0.2) 13px,
+      rgba(60, 60, 60, 0.2) 13px,
+      rgba(60, 60, 60, 0.2) 59px,
+      rgba(117, 117, 117, 0.2) 59px,
+      rgba(117, 117, 117, 0.2) 84px,
+      rgba(207, 207, 207, 0.2) 84px,
+      rgba(207, 207, 207, 0.2) 110px,
+      rgba(184, 184, 184, 0.2) 110px,
+      rgba(184, 184, 184, 0.2) 148px
+    ),
+    linear-gradient(90deg, rgb(75, 30, 121), rgb(29, 79, 244));
 }
 
 #boardContainer {
-    display: flex;
+  display: flex;
 }
 
 .seprator {
-    background: whitesmoke;
-    height: inherit;
-    width: 2px;
-    margin-right: 20px;
-    ;
+  background: whitesmoke;
+  height: inherit;
+  width: 2px;
+  margin-right: 20px;
 }
 
 .headline {
-    font-size: 5vh;
+  font-size: 5vh;
 }
 
 .infoContainer {
-    color: white;
-    font-size: 2vh;
-    font-weight: 800;
-    font-family: "lato";
+  color: white;
+  font-size: 2vh;
+  font-weight: 800;
+  font-family: "lato";
 }
