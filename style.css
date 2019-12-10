@@ -35,6 +35,11 @@ body {
   display: flex;
 }
 
+#buttons{
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .seprator {
   background: whitesmoke;
   height: inherit;
@@ -52,3 +57,4 @@ body {
   font-weight: 800;
   font-family: "lato";
 }
+

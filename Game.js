@@ -3,6 +3,8 @@ const board = document.getElementById("board")
 const redScore = document.getElementById("redScore")
 const blackScore = document.getElementById("blackScore")
 const playerTurn = document.getElementById("player")
+const startButton = document.getElementById("start")
+
 
 // fix for different screen size
 const size = parseInt((window.innerHeight * 0.8) / 8)
@@ -11,13 +13,13 @@ const size = parseInt((window.innerHeight * 0.8) / 8)
 
 const configRed = {
         "Player (Red)": "",
-        "Time limit(ms)": 1000,
+        "Time limit(ms)": 100,
         "maxDepth": 0,
         player: 1,
     },
     configBlack = {
         "Player (Black)": "",
-        "Time limit(ms)": 200,
+        "Time limit(ms)": 100,
         "maxDepth": 0,
         player: -1,
     },
@@ -31,8 +33,16 @@ class Game {
     constructor(playerNum, score) {
         // the controller
         this.dgui = new dat.GUI();
+        this.toggleInterval = false;
         //
-        this.AI = null;
+        // Players
+        this.playerRed = null;
+        this.playerBlack = null;
+
+        // automatic switch for ai vs ai
+        this.redInterval = null;
+        this.blackInterval = null;
+
         // state board
         this.boardState = new BoardState()
         // gui board, only contains the  circles
@@ -51,12 +61,14 @@ class Game {
 
     setUpController() {
         let redFolder = this.dgui.addFolder("Player Red")
-        let redController = redFolder.add(configRed, "Player (Red)", ['Human', 'AI', 'AI Random'])
-        redController.setValue("Human")
-        // redFolder.add(configRed, "Time limit(ms)", 0)
-        // redFolder.add(configRed, "maxDepth", 0)
+        redFolder.open();
+        let redController = redFolder.add(configRed, "Player (Red)", ['Human', 'AI', 'AI Random', 'AI Greedy'])
+        redController.setValue("AI")
+        redFolder.add(configRed, "Time limit(ms)", 0)
+        redFolder.add(configRed, "maxDepth", 0)
         let blackFolder = this.dgui.addFolder("Player Black")
-        let blackController = blackFolder.add(configBlack, "Player (Black)", ['Human', 'AI', 'AI Random'])
+        blackFolder.open();
+        let blackController = blackFolder.add(configBlack, "Player (Black)", ['Human', 'AI', 'AI Random', 'AI Greedy'])
         blackController.setValue("AI")
         blackFolder.add(configBlack, "Time limit(ms)", 0)
         blackFolder.add(configBlack, "maxDepth", 0)
@@ -75,6 +87,11 @@ class Game {
                     redFolder.remove(redFolder.__controllers[1])
                     redFolder.remove(redFolder.__controllers[1])
                 }
+            } else if (configRed["Player (Red)"] == "AI Greedy") {
+                while (redFolder.__controllers.length > 1) {
+                    redFolder.remove(redFolder.__controllers[1])
+                    redFolder.remove(redFolder.__controllers[1])
+                }
             }
         }
         blackController.__onChange = () => {
@@ -89,6 +106,12 @@ class Game {
                 }
             }
             if (configBlack["Player (Black)"] == "AI Random") {
+                while (blackFolder.__controllers.length > 1) {
+                    blackFolder.remove(blackFolder.__controllers[1])
+                    blackFolder.remove(blackFolder.__controllers[1])
+                }
+            }
+            if (configBlack["Player (Black)"] == "AI Greedy") {
                 while (blackFolder.__controllers.length > 1) {
                     blackFolder.remove(blackFolder.__controllers[1])
                     blackFolder.remove(blackFolder.__controllers[1])
@@ -158,7 +181,6 @@ class Game {
                     if (configRed["Player (Red)"] == "Human" && board[i][j] == configRed.player) {
                         guiState[i][j]._renderer.elem.setAttribute("pos", `${i}_${j}`);
                         guiState[i][j]._renderer.elem.onclick = (e) => {
-                            console.log(this.selected)
                             if (this.selected != null && this.guiState[this.selected[0]][this.selected[1]] != null)
                                 this.guiState[this.selected[0]][this.selected[1]].noStroke();
                             let x = e.target.getAttribute("pos")[0],
@@ -237,27 +259,9 @@ class Game {
                             this.selected = null
                             //Human move complete
 
-                            // if playing with AI
-                            if (configRed["Player (Red)"] == "AI" || configRed["Player (Red)"] == "AI Random") {
-                                if (configRed["Player (Red)"] == "AI") {
-                                    console.log("working")
-                                    if (this.AI == null)
-                                        this.AI = new AI(configRed)
-                                    setTimeout(this.makeComputerMove, 10, this.AI.getAction(this.boardState), this.boardState.getBoard(), this.guiState, this.two, this)
-                                } else {
+                            // if playing with AI and human's turn is first
+                            this.makeComputerMoveForHuman()
 
-                                }
-                            }
-                            if (configBlack["Player (Black)"] == "AI" || configBlack["Player (Black)"] == "AI Random") {
-                                if (configBlack["Player (Black)"] == "AI") {
-                                    if (this.AI == null)
-                                        this.AI = new AI(configBlack)
-                                    let action = this.AI.getAction(this.boardState);
-                                    console.log(action)
-                                    setTimeout(this.makeComputerMove, 10, action, this.boardState.getBoard(), this.guiState, this.two, this)
-                                }
-
-                            }
                             if (configRed["Player (Red)"] == "Human" || configBlack["Player (Black)"] == "Human")
                                 this.updateScore()
                         }
@@ -271,15 +275,35 @@ class Game {
         this.two.update();
     }
 
+    makePlayerRedMove() {
+        if (configRed["Player (Red)"] == "AI" || configRed["Player (Red)"] == "AI Random" || configRed["Player (Red)"] == "AI Greedy") {
+            this.makeComputerMove(this.playerRed.getAction(this.boardState), this.boardState.getBoard(), this.guiState, this.two, this)
+        }
+    }
+    makePlayerBlackMove() {
+        if (configBlack["Player (Black)"] == "AI" || configBlack["Player (Black)"] == "AI Random" || configBlack["Player (Black)"] == "AI Greedy") {
+            let action = this.playerBlack.getAction(this.boardState);
+            this.makeComputerMove(action, this.boardState.getBoard(), this.guiState, this.two, this)
+        }
+    }
+
+    makeComputerMoveForHuman() {
+        this.makePlayerRedMove()
+        this.makePlayerBlackMove()
+    }
+
     restart() {
         window.location.reload()
     }
 
     makeComputerMove(action, board, guiState, two, thisRef) {
+        console.log(action)
         if (action === null) {
-            thisRef.updateScore("");
+            thisRef.updateScore(true);
             return
         }
+        console.log(board[action[0].x][action[0].y], " {", action[0].x, action[0].y, "} ---> {", action[1].x, action[1].y, "} ", board[action[1].x][action[1].y])
+        // console.log(BoardState.getLegalActions(1,board))
         let pX = action[0].x,
             pY = action[0].y,
             nX = action[1].x,
@@ -299,7 +323,7 @@ class Game {
         guiState[nX][nY]._renderer.elem.setAttribute("pos", `${nX}_${nY}`)
         guiState[pX][pY] = 0
         if (nX == 0 || nX == 7) {
-            thisRef.setKing([nX, nY], 1)
+            thisRef.setKing([nX, nY], board[nX][nY])
         }
         two.update();
         thisRef.updateScore();
@@ -320,15 +344,11 @@ class Game {
         // this.two.update();
     }
 
-    turnManger(){
-        
-    }
 
     removeMiddlePiece(coord) {
         // console.log("remove piece", coord)
         // x.attributes[0].textContent="matrix(1 0 0 1 70.667 266.667)"
         let x = document.getElementById(this.guiState[coord[0]][coord[1]].id)
-        console.log(x.attributes[0].textContent)
         x.remove();
         this.guiState[coord[0]][coord[1]].remove();
         this.guiState[coord[0]][coord[1]] = 0;
@@ -339,10 +359,98 @@ class Game {
 
     start() {
         this.addOnClickToElements();
+        // vs Human
+        // console.log((configBlack["Player (Black)"] == "AI Random" && !(configRed["Player (Red)"] == "AI Random")))
+        if (configRed["Player (Red)"] == "AI") {
+            this.playerRed = new AI(configRed)
+            // if (firstTurn["First Turn"] == "Red") {
+            //     this.makeComputerMoveForHuman()
+            // }
+        } else if (configRed["Player (Red)"] == "AI Random") {
+            this.playerRed = new AIRandom(configRed)
+            // if (firstTurn["First Turn"] == "Black") {
+            //     this.makeComputerMoveForHuman()
+            // }
+        } else if (configRed["Player (Red)"] == "AI Greedy") {
+            this.playerRed = new AIGreedy(configRed)
+            // if (firstTurn["First Turn"] == "Black") {
+            //     this.makeComputerMoveForHuman()
+            // }
+        }
+
+        // console.log(configBlack["Player (Black)"] == "AI" )
+        // console.log((configRed["Player (Black)"] == "AI Greedy"))
+        if (configBlack["Player (Black)"] == "AI") {
+            console.log("working")
+            this.playerBlack = new AI(configBlack)
+            // if (firstTurn["First Turn"] == "Black") {
+            //     this.makeComputerMoveForHuman()
+            // }
+        } else if (configBlack["Player (Black)"] == "AI Random") {
+            this.playerBlack = new AIRandom(configBlack)
+            // if (firstTurn["First Turn"] == "Black") {
+            //     this.makeComputerMoveForHuman()
+            // }
+        } else if (configBlack["Player (Black)"] == "AI Greedy") {
+            console.log("working")
+            this.playerBlack = new AIGreedy(configBlack)
+            // if (firstTurn["First Turn"] == "Black") {
+            //     this.makeComputerMoveForHuman()
+            // }
+        }
+        // if (configBlack["Player (Black)"] == "AI" && configRed["Player (Red)"] == "AI") {
+        //     // this.playerBlack = new AI(configBlack)
+        //     // this.playerRed = new AI(configRed)
+        //     document.getElementById("ai").style.display = "inline"
+        // }
+        startButton.remove()
         document.getElementsByClassName("dg ac")[0].remove();
     }
 
-    updateScore() {
+    aiMove() {
+        if (firstTurn["First Turn"] == "Black") {
+            this.makePlayerBlackMove()
+            firstTurn["First Turn"] = "Red"
+        } else {
+            this.makePlayerRedMove()
+            firstTurn["First Turn"] = "Black"
+        }
+    }
+
+
+    toggleAI() {
+        this.toggleInterval = !this.toggleInterval;
+        if (this.toggleInterval) {
+            this.blackInterval = setInterval(() => {
+                    if (firstTurn["First Turn"] == "Black") {
+                        this.makePlayerBlackMove()
+                        firstTurn["First Turn"] = "Red"
+                    }
+                    // this.two.update()
+                }, configBlack["Time limit(ms)"]),
+                this.redInterval = setInterval(() => {
+                    if (firstTurn["First Turn"] == "Red") {
+                        this.makePlayerRedMove()
+                        firstTurn["First Turn"] = "Black"
+                    }
+                    // this.two.update()
+                }, configRed["Time limit(ms)"])
+        } else {
+            this.clearIntervals
+        }
+
+    }
+
+    clearIntervals() {
+        clearInterval(this.blackInterval)
+        clearInterval(this.redInterval)
+    }
+
+
+    updateScore(noAction) {
+        if (noAction) {
+            playerTurn.innerHTML = "No more moves left. Its a draw"
+        }
         let board = this.boardState.getBoard(),
             red = 0,
             black = 0;
@@ -357,10 +465,15 @@ class Game {
         // if (parseInt(this.boardState.getTurn()) == 1)
         //     playerTurn.innerHTML = "RED"
         // else playerTurn.innerHTML = "BLACK"
-        if (red == 0)
+        if (red == 0) {
             playerTurn.innerHTML = "Black wins"
-        else if (black == 0)
+            this.clearIntervals()
+
+        } else if (black == 0) {
             playerTurn.innerHTML = "Red wins"
+            this.clearIntervals()
+
+        }
     }
 
 }

@@ -72,11 +72,12 @@ class AI {
         let kingsDifference, posDifference, pieceDifference;
         kingsDifference = computerKings - humanKings;
         pieceDifference = computerPieces - humanPieces;
-        posDifference = computerPieces - humanPieces;
+        posDifference = computerPositions - humanPositions;
 
-        let weights = [2, 20, 200],
+        let weights = [2, 20, 300],
             vals = [posDifference, kingsDifference, pieceDifference],
             returnValue = 0;
+            // console.log(vals)
         weights.forEach((w, i) => {
             returnValue += w * vals[i];
         })
@@ -101,11 +102,12 @@ class AI {
                 this.currentMaxDepth++;
             }
         } catch (err) {
-            console.log(err)
+            // console.log(err)
         }
         // console.log("currentBestOverallAction", this.currentBestOverallActionVal)
         // return the best action found
         // console.log(this.vals)
+        // console.log(this.bestAction)/
         if (this.bestAction !== null)
             return this.bestAction
         return this.currentBestAction;
