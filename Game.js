@@ -34,6 +34,7 @@ class Game {
         // the controller
         this.dgui = new dat.GUI();
         this.toggleInterval = false;
+        this.gameOver=false;
         //
         // Players
         this.playerRed = null;
@@ -47,6 +48,7 @@ class Game {
         this.boardState = new BoardState()
         // gui board, only contains the  circles
         this.guiState = this.twoDArray(8)
+        this.startingGuiState=null
 
         // contains all the rectangles
         this.checkersBoard = [];
@@ -55,7 +57,7 @@ class Game {
             height: window.innerHeight * 0.9,
         }).appendTo(board);
 
-        this.setUpSvgElements();
+        this.setUpSvgElements(true);
         this.setUpController()
     }
 
@@ -132,22 +134,23 @@ class Game {
         return k
     }
 
-    setUpSvgElements() {
+    setUpSvgElements(firstTime) {
         let state = this.boardState.getBoard()
         let guiState = this.guiState
         let t = this.two;
         for (let i = 0; i < state.length; i++) {
-            let checkersBoardRow = []
+                let checkersBoardRow = []
             for (let j = 0; j < state[i].length; j++) {
                 // the board rectangles
-                let rec = t.makeRectangle(i * size + size / 1.5, j * size + size / 1.5, size, size);
-                if ((i % 2 != 0 && j % 2 == 0) || (i % 2 == 0 && j % 2 != 0))
-                    rec.fill = "rgba(0,0,0,1)"
-                else if (!(i % 2 != 0 && j % 2 == 0) || (i % 2 == 0 && j % 2 != 0)) {
-                    rec.fill = "rgba(255,255,255,1)"
+                if(firstTime){
+                    let rec = t.makeRectangle(i * size + size / 1.5, j * size + size / 1.5, size, size);
+                    if ((i % 2 != 0 && j % 2 == 0) || (i % 2 == 0 && j % 2 != 0))
+                        rec.fill = "rgba(0,0,0,1)"
+                    else if (!(i % 2 != 0 && j % 2 == 0) || (i % 2 == 0 && j % 2 != 0)) {
+                        rec.fill = "rgba(255,255,255,1)"
+                    }
+                    checkersBoardRow.push(rec);
                 }
-
-                checkersBoardRow.push(rec);
 
                 // player circles
                 // red =1
@@ -165,7 +168,7 @@ class Game {
                     guiState[j][i] = c;
                 }
             }
-            this.checkersBoard.push(checkersBoardRow)
+                this.checkersBoard.push(checkersBoardRow)
         }
         t.update();
     }
@@ -292,6 +295,56 @@ class Game {
         this.makePlayerBlackMove()
     }
 
+    cloneGuiState(arrayToCopy) {
+        let arr=this.twoDArray(8)
+        arrayToCopy.forEach((x,i) => {
+            x.forEach((y,j) => {
+                if(y!=0)
+                    arr[i][j]=Object.assign({},y)
+            });
+        });
+        return arr
+    }
+
+    removeEveryPieceFromBoard(){
+        this.guiState.forEach((x,i)=>{
+            x.forEach((y,j)=>{
+                if(y!=0){
+                y.remove()
+                }
+                
+            })
+        })
+        this.two.update();
+    }
+
+    createPiecesFromClonedGUIState(array){
+        this.guiState=this.twoDArray(8)
+        array.forEach((x,i)=>{
+            x.forEach((y,j)=>{
+                if(y!=0)
+                    this.guiState[i][j]=Object.assign(this.two.makeCircle(),y)
+            })
+        })
+        this.two.update()
+    }
+
+    generateIteration() {
+        console.log((this.playerRed == null && this.playerBlack == null))
+        if (this.playerRed == null && this.playerBlack == null) {
+          console.log(
+            "Please set up controls and start the game \nHuman v Human not supported"
+          );
+          return;
+        }
+        if (this.gameOver) {
+            this.removeEveryPieceFromBoard()
+            console.log("working")
+            this.setUpSvgElements()
+            // this.createPiecesFromClonedGUIState(this.startingGuiState)
+        }
+      }
+
     restart() {
         window.location.reload()
     }
@@ -358,6 +411,7 @@ class Game {
 
     start() {
         this.addOnClickToElements();
+        this.startingGuiState=this.cloneGuiState(this.guiState)
         // vs Human
         // console.log((configBlack["Player (Black)"] == "AI Random" && !(configRed["Player (Red)"] == "AI Random")))
         if (configRed["Player (Red)"] == "AI") {
@@ -467,11 +521,11 @@ class Game {
         if (red == 0) {
             playerTurn.innerHTML = "Black wins"
             this.clearIntervals()
-
+            this.gameOver=true;
         } else if (black == 0) {
             playerTurn.innerHTML = "Red wins"
             this.clearIntervals()
-
+            this.gameOver=true;
         }
     }
 
