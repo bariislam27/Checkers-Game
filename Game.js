@@ -15,16 +15,19 @@ const configRed = {
         "Player (Red)": "",
         "Time limit(ms)": 100,
         "maxDepth": 0,
-        player: 1,
+        "player": 1,
     },
     configBlack = {
         "Player (Black)": "",
         "Time limit(ms)": 100,
         "maxDepth": 0,
-        player: -1,
+        "player": -1,
     },
     firstTurn = {
         "First Turn": "Red"
+    },
+    iterations = {
+        "Iterations": 0
     }
 
 
@@ -57,21 +60,70 @@ class Game {
 
         this.setUpSvgElements();
         this.setUpController()
+        if (localStorage.getItem("Iterations") > 1 && parseInt(localStorage.getItem("Iterations")) > parseInt(localStorage.getItem("thisIteration"))) {
+            this.start()
+            this.toggleAI()
+        }
     }
 
     setUpController() {
+        let iterationsController;
         let redFolder = this.dgui.addFolder("Player Red")
-        redFolder.open();
-        let redController = redFolder.add(configRed, "Player (Red)", ['Human', 'AI', 'AI Random', 'AI Greedy'])
-        redController.setValue("AI")
-        redFolder.add(configRed, "Time limit(ms)", 0)
-        redFolder.add(configRed, "maxDepth", 0)
         let blackFolder = this.dgui.addFolder("Player Black")
+        redFolder.open();
         blackFolder.open();
+        let redController = redFolder.add(configRed, "Player (Red)", ['Human', 'AI', 'AI Random', 'AI Greedy'])
         let blackController = blackFolder.add(configBlack, "Player (Black)", ['Human', 'AI', 'AI Random', 'AI Greedy'])
-        blackController.setValue("AI")
-        blackFolder.add(configBlack, "Time limit(ms)", 0)
-        blackFolder.add(configBlack, "maxDepth", 0)
+
+        if (localStorage.getItem("Iterations") > 1 && parseInt(localStorage.getItem("Iterations")) >= parseInt(localStorage.getItem("thisIteration"))) {
+            redController.setValue(localStorage.getItem("r_Player (Red)"))
+            redFolder.add(configRed, "Time limit(ms)", 0).setValue(parseInt(localStorage.getItem("r_Time limit(ms)")))
+            redFolder.add(configRed, "maxDepth", 0).setValue(parseInt(localStorage.getItem("r_maxDepth")))
+
+
+            blackController.setValue(localStorage.getItem("b_Player (Black)"))
+            blackFolder.add(configBlack, "Time limit(ms)", 0).setValue(parseInt(localStorage.getItem("b_Time limit(ms)")))
+            blackFolder.add(configBlack, "maxDepth", 0).setValue(parseInt(localStorage.getItem("b_maxDepth")))
+            this.dgui.add(firstTurn, "First Turn", ["Red", "Black"]).setValue(localStorage.getItem("First Turn"))
+            iterationsController=this.dgui.add(iterations, "Iterations", 1, 100).setValue(localStorage.getItem("Iterations"))
+            let x = localStorage.getItem("thisIteration")
+            if (x == null)
+                x = 1
+            // console.log(x)
+            localStorage.setItem("thisIteration", ++x)
+        } else {
+            // redController.setValue(localStorage.getItem("r_Player (Red)"))
+            // redFolder.add(configRed, "Time limit(ms)", 0).setValue(localStorage.getItem("r_Time limit(ms)"))
+            // redFolder.add(configRed, "maxDepth", 0).setValue(localStorage.getItem("r_maxDepth"))
+
+
+            // blackController.setValue(localStorage.getItem("b_Player (Black)"))
+            // blackFolder.add(configBlack, "Time limit(ms)", 0).setValue(localStorage.getItem("b_Time limit(ms)"))
+            // blackFolder.add(configBlack, "maxDepth", 0).setValue(localStorage.getItem("b_maxDepth"))
+            // this.dgui.add(firstTurn, "First Turn", ["Red", "Black"]).setValue(localStorage.getItem("First Turn"))
+            // iterationsController=this.dgui.add(iterations, "Iterations", 1, 100).setValue(localStorage.getItem("Iterations"))
+            // let x = localStorage.getItem("thisIteration")
+            // if (x == null)
+            //     x = 1
+            // console.log(x)
+            // localStorage.setItem("thisIteration", ++x)
+
+
+
+
+            redController.setValue("AI")
+            redFolder.add(configRed, "Time limit(ms)", 0)
+            redFolder.add(configRed, "maxDepth", 0)
+
+
+            blackController.setValue("AI")
+            blackFolder.add(configBlack, "Time limit(ms)", 0)
+            blackFolder.add(configBlack, "maxDepth", 0)
+
+            this.dgui.add(firstTurn, "First Turn", ["Red", "Black"])
+            iterationsController=this.dgui.add(iterations, "Iterations", 1, 100).setValue(1)
+        }
+
 
         redController.__onChange = () => {
             if (configRed["Player (Red)"] == "Human") {
@@ -118,8 +170,32 @@ class Game {
                 }
             }
         }
-        this.dgui.add(firstTurn, "First Turn", ["Red", "Black"])
+        iterationsController.__onChange=()=>{
+            localStorage.setItem("Iterations", parseInt(iterations["Iterations"]))
+        }
+
+
+
     }
+
+    // setValuesFromLocalStorage() {
+    //     let keys = Object.keys(configRed)
+    //     keys.forEach((x) => {
+    //         configRed[x] = localStorage.getItem(`r_${x}`)
+    //         console.log(configRed[x])
+    //     })
+    //     keys = Object.keys(configBlack)
+    //     keys.forEach((x) => {
+    //         configBlack[x] = localStorage.getItem(`b_${x}`)
+    //         console.log(configBlack[x])
+    //     })
+    //     firstTurn["First Turn"] = localStorage.getItem("First Turn")
+    //     console.log(firstTurn["First Turn"])
+    //     iterations["Iterations"] = localStorage.getItem("Iterations")
+    //     console.log(iterations["Iterations"])
+    // }
+
+
 
     twoDArray(x) {
         let k = []
@@ -297,11 +373,12 @@ class Game {
     }
 
     makeComputerMove(action, board, guiState, two, thisRef) {
+        // console.log(action)
         if (action === null) {
             thisRef.updateScore(true);
             return
         }
-        console.log(board[action[0].x][action[0].y], " {", action[0].x, action[0].y, "} ---> {", action[1].x, action[1].y, "} ", board[action[1].x][action[1].y])
+        // console.log(board[action[0].x][action[0].y], " {", action[0].x, action[0].y, "} ---> {", action[1].x, action[1].y, "} ", board[action[1].x][action[1].y])
         // console.log(BoardState.getLegalActions(1,board))
         let pX = action[0].x,
             pY = action[0].y,
@@ -356,7 +433,26 @@ class Game {
         this.two.update();
     }
 
+    setLocalVariables() {
+        // console.log('setting local storage')
+        let keys = Object.keys(configRed)
+        keys.forEach((x) => {
+            localStorage.setItem(`r_${x}`, configRed[x])
+        })
+        keys = Object.keys(configBlack)
+        keys.forEach((x) => {
+            localStorage.setItem(`b_${x}`, configBlack[x])
+        })
+        localStorage.setItem("First Turn", firstTurn["First Turn"])
+        localStorage.setItem("Iterations", parseInt(iterations["Iterations"]))
+    }
+
     start() {
+        if (configRed["Player (Red)"] != "Human" && configBlack["Player (Black)"] != "Human" && iterations.Iterations > 1 &&
+            localStorage.getItem("Iterations") >= localStorage.getItem("thisIteration")) {
+            this.setLocalVariables()
+
+        }
         this.addOnClickToElements();
         // vs Human
         // console.log((configBlack["Player (Black)"] == "AI Random" && !(configRed["Player (Red)"] == "AI Random")))
@@ -391,7 +487,7 @@ class Game {
             //     this.makeComputerMoveForHuman()
             // }
         } else if (configBlack["Player (Black)"] == "AI Greedy") {
-            console.log("working")
+            // console.log("working")
             this.playerBlack = new AIGreedy(configBlack)
             // if (firstTurn["First Turn"] == "Black") {
             //     this.makeComputerMoveForHuman()
@@ -404,6 +500,7 @@ class Game {
         // }
         startButton.remove()
         this.dgui.close();
+        // console.log(this.playerRed, this.playerBlack)
     }
 
     aiMove() {
@@ -419,21 +516,24 @@ class Game {
 
     toggleAI() {
         this.toggleInterval = !this.toggleInterval;
+
         if (this.toggleInterval) {
+            // console.log(firstTurn["First Turn"] == "Red", firstTurn["First Turn"] == "Black", this.blackInterval)
             this.blackInterval = setInterval(() => {
+                // console.log("working inside")
                     if (firstTurn["First Turn"] == "Black") {
                         this.makePlayerBlackMove()
                         firstTurn["First Turn"] = "Red"
                     }
                     // this.two.update()
-                }, configBlack["Time limit(ms)"]),
+                }, configBlack["Time limit(ms)"] + 100),
                 this.redInterval = setInterval(() => {
                     if (firstTurn["First Turn"] == "Red") {
                         this.makePlayerRedMove()
                         firstTurn["First Turn"] = "Black"
                     }
                     // this.two.update()
-                }, configRed["Time limit(ms)"])
+                }, configRed["Time limit(ms)"] + 100)
         } else {
             this.clearIntervals()
         }
@@ -448,7 +548,8 @@ class Game {
 
     updateScore(noAction) {
         if (noAction) {
-            playerTurn.innerHTML = "No more moves left. Its a draw"
+            playerTurn.innerHTML = "No more moves left. The player with no moves loses."
+            // this.restart()
         }
         let board = this.boardState.getBoard(),
             red = 0,
@@ -467,11 +568,15 @@ class Game {
         if (red == 0) {
             playerTurn.innerHTML = "Black wins"
             this.clearIntervals()
-
+            setTimeout(() => {
+                this.restart()
+            }, 100)
         } else if (black == 0) {
             playerTurn.innerHTML = "Red wins"
             this.clearIntervals()
-
+            setTimeout(() => {
+                this.restart()
+            }, 100)
         }
     }
 

@@ -107,7 +107,7 @@ class AI {
         // console.log("currentBestOverallAction", this.currentBestOverallActionVal)
         // return the best action found
         // console.log(this.vals)
-        // console.log(this.bestAction)/
+        // console.log(this.bestAction)
         if (this.bestAction !== null)
             return this.bestAction
         return this.currentBestAction;
