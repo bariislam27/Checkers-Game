@@ -74,7 +74,7 @@ class AI {
         pieceDifference = computerPieces - humanPieces;
         posDifference = computerPositions - humanPositions;
 
-        let weights = [2, 20, 300],
+        let weights = [1, 10, 300],
             vals = [posDifference, kingsDifference, pieceDifference],
             returnValue = 0;
             // console.log(vals)
@@ -82,6 +82,10 @@ class AI {
             returnValue += w * vals[i];
         })
         return returnValue
+    }
+
+    AIStuckDetecter(){
+        
     }
 
     IDAlphaBeta = function (state) {

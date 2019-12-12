@@ -34,6 +34,9 @@ const configRed = {
 
 class Game {
     constructor(playerNum, score) {
+        // keeps sequence of moves made till now
+        this.from=""
+
         // the controller
         this.dgui = new dat.GUI();
         this.toggleInterval = false;
@@ -60,9 +63,14 @@ class Game {
 
         this.setUpSvgElements();
         this.setUpController()
-        if (localStorage.getItem("Iterations") > 1 && parseInt(localStorage.getItem("Iterations")) > parseInt(localStorage.getItem("thisIteration"))) {
+
+        if (parseInt(localStorage.getItem("Iterations")) > parseInt(localStorage.getItem("thisIteration"))) {
             this.start()
             this.toggleAI()
+        } else if(parseInt(localStorage.getItem("Iterations")) == parseInt(localStorage.getItem("thisIteration"))){
+            console.log("Iteration Results","\nPlayers ",localStorage.getItem("Player info:  "),"\nIterations: ",parseInt(localStorage.getItem("thisIteration")),
+            "\nRed: ",localStorage.getItem("Red"),"\nBlack: ",localStorage.getItem("Black"))
+            this.clearLocalVariable()
         }
     }
 
@@ -85,7 +93,7 @@ class Game {
             blackFolder.add(configBlack, "Time limit(ms)", 0).setValue(parseInt(localStorage.getItem("b_Time limit(ms)")))
             blackFolder.add(configBlack, "maxDepth", 0).setValue(parseInt(localStorage.getItem("b_maxDepth")))
             this.dgui.add(firstTurn, "First Turn", ["Red", "Black"]).setValue(localStorage.getItem("First Turn"))
-            iterationsController=this.dgui.add(iterations, "Iterations", 1, 100).setValue(localStorage.getItem("Iterations"))
+            iterationsController = this.dgui.add(iterations, "Iterations", 1, 100).setValue(localStorage.getItem("Iterations"))
             let x = localStorage.getItem("thisIteration")
             if (x == null)
                 x = 1
@@ -121,7 +129,7 @@ class Game {
             blackFolder.add(configBlack, "maxDepth", 0)
 
             this.dgui.add(firstTurn, "First Turn", ["Red", "Black"])
-            iterationsController=this.dgui.add(iterations, "Iterations", 1, 100).setValue(1)
+            iterationsController = this.dgui.add(iterations, "Iterations", 1, 100).setValue(1)
         }
 
 
@@ -170,7 +178,7 @@ class Game {
                 }
             }
         }
-        iterationsController.__onChange=()=>{
+        iterationsController.__onChange = () => {
             localStorage.setItem("Iterations", parseInt(iterations["Iterations"]))
         }
 
@@ -378,6 +386,12 @@ class Game {
             thisRef.updateScore(true);
             return
         }
+        this.from+=`${action[0].x}_${action[0].y},`
+        if((this.from.match(new RegExp(`${action[0].x}_${action[0].y},`, "g")) || []).length>50 
+        && configBlack["Player (Black)"]=="AI" && configRed["Player (Red)"]=="AI"){
+            thisRef.updateScore("draw"); 
+
+        }
         // console.log(board[action[0].x][action[0].y], " {", action[0].x, action[0].y, "} ---> {", action[1].x, action[1].y, "} ", board[action[1].x][action[1].y])
         // console.log(BoardState.getLegalActions(1,board))
         let pX = action[0].x,
@@ -445,14 +459,14 @@ class Game {
         })
         localStorage.setItem("First Turn", firstTurn["First Turn"])
         localStorage.setItem("Iterations", parseInt(iterations["Iterations"]))
+        localStorage.setItem("thisIteration", parseInt(0))
+        localStorage.setItem("Red", parseInt(0))
+        localStorage.setItem("Black", parseInt(0))
+        localStorage.setItem("Player info:  ", `Red: ${configRed["Player (Red)"]}, Black: ${configBlack["Player (Black)"]}`)
     }
 
     start() {
-        if (configRed["Player (Red)"] != "Human" && configBlack["Player (Black)"] != "Human" && iterations.Iterations > 1 &&
-            localStorage.getItem("Iterations") >= localStorage.getItem("thisIteration")) {
-            this.setLocalVariables()
 
-        }
         this.addOnClickToElements();
         // vs Human
         // console.log((configBlack["Player (Black)"] == "AI Random" && !(configRed["Player (Red)"] == "AI Random")))
@@ -476,7 +490,6 @@ class Game {
         // console.log(configBlack["Player (Black)"] == "AI" )
         // console.log((configRed["Player (Black)"] == "AI Greedy"))
         if (configBlack["Player (Black)"] == "AI") {
-            console.log("working")
             this.playerBlack = new AI(configBlack)
             // if (firstTurn["First Turn"] == "Black") {
             //     this.makeComputerMoveForHuman()
@@ -520,7 +533,7 @@ class Game {
         if (this.toggleInterval) {
             // console.log(firstTurn["First Turn"] == "Red", firstTurn["First Turn"] == "Black", this.blackInterval)
             this.blackInterval = setInterval(() => {
-                // console.log("working inside")
+                    // console.log("working inside")
                     if (firstTurn["First Turn"] == "Black") {
                         this.makePlayerBlackMove()
                         firstTurn["First Turn"] = "Red"
@@ -540,6 +553,40 @@ class Game {
 
     }
 
+    startIteration() {
+        // && iterations.Iterations > 1 &&
+        // localStorage.getItem("Iterations") >= localStorage.getItem("thisIteration")
+        if (configRed["Player (Red)"] != "Human" && configBlack["Player (Black)"] != "Human" && iterations.Iterations > 1) {
+            this.setLocalVariables()
+            this.start()
+            this.toggleAI()
+        } else {
+            alert("No humans allowed for iteration and number of iteration should be > 1")
+        }
+    }
+
+    clearLocalVariable(){
+        let keys = Object.keys(configRed)
+        keys.forEach((x) => {
+            localStorage.removeItem(`r_${x}`)
+        })
+        keys = Object.keys(configBlack)
+        keys.forEach((x) => {
+            localStorage.removeItem(`b_${x}`)
+        })
+        localStorage.removeItem("First Turn")
+        localStorage.removeItem("Iterations")
+        localStorage.removeItem("thisIteration")
+        localStorage.removeItem("Red")
+        localStorage.removeItem("Black")
+        localStorage.removeItem("Player info:  ")
+    }
+
+    stopIteration(){
+        this.clearLocalVariable()
+        this.restart()
+    }
+
     clearIntervals() {
         clearInterval(this.blackInterval)
         clearInterval(this.redInterval)
@@ -550,6 +597,13 @@ class Game {
         if (noAction) {
             playerTurn.innerHTML = "No more moves left. The player with no moves loses."
             // this.restart()
+        }
+        if(noAction=="draw"){
+            playerTurn.innerHTML = "Draw since players are stuck in making same moves"
+            this.clearIntervals()
+            setTimeout(() => {
+                    this.restart()
+            }, 100)
         }
         let board = this.boardState.getBoard(),
             red = 0,
@@ -569,13 +623,22 @@ class Game {
             playerTurn.innerHTML = "Black wins"
             this.clearIntervals()
             setTimeout(() => {
-                this.restart()
+                if (parseInt(localStorage.getItem("Iterations")) > parseInt(localStorage.getItem("thisIteration"))) {
+                    let x = parseInt(localStorage.getItem("Black"))
+                    localStorage.setItem("Black", parseInt(++x))
+                    this.restart()
+                }
+
             }, 100)
         } else if (black == 0) {
             playerTurn.innerHTML = "Red wins"
             this.clearIntervals()
             setTimeout(() => {
-                this.restart()
+                if (parseInt(localStorage.getItem("Iterations")) > parseInt(localStorage.getItem("thisIteration"))) {
+                    let x = parseInt(localStorage.getItem("Red"))
+                    localStorage.setItem("Red", parseInt(++x))
+                    this.restart()
+                }
             }, 100)
         }
     }
